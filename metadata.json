@@ -1,0 +1,5 @@
+{
+  "name": "Sterile Markdown Reader",
+  "description": "A fully offline, zero-network Markdown viewer PWA.",
+  "requestFramePermissions": []
+}
