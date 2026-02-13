@@ -1,17 +1,16 @@
 // STRICT CACHE-ONLY SERVICE WORKER
-// No network fallback. No background sync. No auto updates.
+// No network fallback. No binary assets.
 
-const CACHE_NAME = 'sterile-v1';
+const CACHE_NAME = 'sterile-core-v1';
+
+// Only cache the shell. Icons are inline in manifest.
 const ASSETS = [
     './',
     './index.html',
-    './manifest.json',
-    './icon-192.png',
-    './icon-512.png'
+    './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
-    // Pre-cache core assets
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(ASSETS);
@@ -20,7 +19,6 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-    // Delete old caches manually when CACHE_NAME is updated
     event.waitUntil(
         caches.keys().then((keys) => {
             return Promise.all(
@@ -35,19 +33,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // CACHE ONLY STRATEGY
-    // If it's not in the cache, it fails.
-    // We intentionally do NOT use fetch(event.request) as fallback.
+    // CACHE ONLY.
+    // If not in cache, return 404.
+    // Absolutely no fetch(event.request) fallback.
     event.respondWith(
         caches.match(event.request).then((response) => {
-            if (response) {
-                return response;
-            }
-            // Return 404 for anything not in cache to strictly enforce offline sandbox
-            return new Response('Offline: Resource not found in sterile cache.', {
-                status: 404,
-                statusText: 'Not Found'
-            });
+            return response || new Response('Offline sterile sandbox.', { status: 404 });
         })
     );
 });
