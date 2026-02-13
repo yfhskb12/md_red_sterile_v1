@@ -132,7 +132,7 @@
 </head>
 <body>
     <header>
-        <h1>Sterile Reader</h1>
+        <h1>Sterile Reader v1.1</h1>
         <div class="file-upload">
             <button class="btn">Open MD</button>
             <input type="file" id="fileInput" accept=".md,.markdown,.txt">
@@ -149,9 +149,15 @@
     <script>
         // 1. Service Worker Registration
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log('Sterile SW Active'))
-                .catch(e => console.error('SW Fail', e));
+            // Hardening: Service Workers require HTTP/HTTPS, not file://
+            if (window.location.protocol === 'file:') {
+                console.error('Service Workers disabled on file://. Please use localhost.');
+            } else {
+                // Hardening: Explicit scope and path to avoid origin mismatch
+                navigator.serviceWorker.register('sw.js', { scope: './' })
+                    .then(() => console.log('Sterile SW Active'))
+                    .catch(e => console.error('SW Fail', e));
+            }
         }
 
         // 2. File Handling
@@ -174,7 +180,7 @@
         // 3. Sterile Parser
         // Strictly local. No external calls.
         function parse(md) {
-            // Escape HTML
+            // HARDENING: Escape HTML first to prevent injection
             let out = md.replace(/&/g, '&amp;')
                         .replace(/</g, '&lt;')
                         .replace(/>/g, '&gt;');

@@ -1,8 +1,10 @@
 {
   "name": "Sterile Reader",
   "short_name": "Sterile",
-  "start_url": "./index.html",
+  "start_url": "index.html",
+  "scope": ".",
   "display": "standalone",
+  "display_override": ["standalone"],
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
