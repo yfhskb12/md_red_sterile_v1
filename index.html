@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,10 +8,10 @@
   <meta name="description" content="Offline-only Markdown Viewer" />
   <meta name="theme-color" content="#000000" />
 
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="/icon-192.png" />
-  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <!-- PWA (GitHub Pages subpath-safe) -->
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
 
   <style>
     :root {
@@ -115,6 +116,7 @@
     .md-body a { color: #58a6ff; text-decoration: none; }
     .md-body a:hover { text-decoration: underline; }
 
+    /* Sterile Image Links */
     .sterile-img {
       display: inline-block;
       border: 1px dashed var(--dim);
@@ -148,22 +150,18 @@
   </main>
 
   <script>
-    // 1. Service Worker Registration
-    // Goal: installable PWA (WebAPK) + strict offline behavior
+    // 1) Service Worker Registration (subpath-safe)
     if ('serviceWorker' in navigator) {
       if (window.location.protocol === 'file:') {
         console.error('Service Workers disabled on file://. Use localhost or HTTPS.');
       } else {
-        // Use absolute path so scope/origin are stable on GitHub Pages too
-        // Scope is derived from current path root (repo subpath)
-        const basePath = new URL('.', window.location.href).pathname; 
-        navigator.serviceWorker.register('/sw.js', { scope: basePath })
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
           .then(() => console.log('Sterile SW Active'))
           .catch(e => console.error('SW Fail', e));
       }
     }
 
-    // 2. File Handling
+    // 2) File Handling
     const input = document.getElementById('fileInput');
     const app = document.getElementById('app');
 
@@ -180,15 +178,12 @@
       reader.readAsText(file);
     });
 
-    // 3. Sterile Parser
-    // Strictly local. No external calls.
+    // 3) Sterile Parser (local only)
     function parse(md) {
-      // Escape HTML first to prevent injection
       let out = md.replace(/&/g, '&amp;')
                   .replace(/</g, '&lt;')
                   .replace(/>/g, '&gt;');
 
-      // Headers
       out = out.replace(/^###### (.*$)/gim, '<h6>$1</h6>')
                .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
                .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
@@ -196,20 +191,16 @@
                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
                .replace(/^# (.*$)/gim, '<h1>$1</h1>');
 
-      // Bold/Italic
       out = out.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
                .replace(/__(.*?)__/gim, '<strong>$1</strong>')
                .replace(/\*(.*?)\*/gim, '<em>$1</em>')
                .replace(/_(.*?)_/gim, '<em>$1</em>');
 
-      // Code
       out = out.replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
                .replace(/`([^`]+)`/gim, '<code>$1</code>');
 
-      // Blockquote
       out = out.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
 
-      // Lists
       out = out.replace(/^\s*-\s+(.*$)/gim, '<ul><li>$1</li></ul>')
                .replace(/^\s*\*\s+(.*$)/gim, '<ul><li>$1</li></ul>')
                .replace(/<\/ul>\s*<ul>/gim, '');
@@ -218,11 +209,9 @@
       out = out.replace(/!\[([^\]]*)\]\(([^)]+)\)/gim,
         '<a href="$2" target="_blank" rel="noopener noreferrer" class="sterile-img">[Image: $1]</a>');
 
-      // Links
       out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/gim,
         '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
-      // Paragraphs & Line Breaks
       out = out.replace(/\n\n/gim, '</p><p>');
       out = out.replace(/\n/gim, '<br />');
 
