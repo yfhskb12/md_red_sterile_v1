@@ -1,235 +1,229 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sterile Reader</title>
-    <meta name="description" content="Offline-only Markdown Viewer">
-    <meta name="theme-color" content="#000000">
-    <link rel="manifest" href="manifest.json">
-    <style>
-        :root {
-            --bg: #000000;
-            --surface: #111111;
-            --border: #333333;
-            --text: #e0e0e0;
-            --dim: #888888;
-            --accent: #ffffff;
-            --code-bg: #1a1a1a;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sterile Reader</title>
+  <meta name="description" content="Offline-only Markdown Viewer" />
+  <meta name="theme-color" content="#000000" />
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
+  <!-- PWA (GitHub Pages subpath-safe) -->
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
 
-        /* Header */
-        header {
-            background-color: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-        }
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #111111;
+      --border: #333333;
+      --text: #e0e0e0;
+      --dim: #888888;
+      --accent: #ffffff;
+      --code-bg: #1a1a1a;
+    }
 
-        h1 { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-        /* File Input Button */
-        .file-upload {
-            position: relative;
-            display: inline-block;
-            overflow: hidden;
-            cursor: pointer;
-        }
+    header {
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
 
-        .btn {
-            background: var(--accent);
-            color: var(--bg);
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-        }
+    h1 { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin: 0; }
 
-        input[type="file"] {
-            position: absolute;
-            top: 0; right: 0; bottom: 0; left: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
+    .file-upload {
+      position: relative;
+      display: inline-block;
+      overflow: hidden;
+      cursor: pointer;
+    }
 
-        /* Content Area */
-        main {
-            flex: 1;
-            overflow-y: auto;
-            padding: 2rem 1rem;
-            max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-        }
+    .btn {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
 
-        /* Typography */
-        .md-body { line-height: 1.6; word-wrap: break-word; }
-        .md-body h1, .md-body h2, .md-body h3 { margin-top: 2em; color: var(--accent); line-height: 1.3; }
-        .md-body h1 { border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-        .md-body p { margin: 1em 0; }
-        
-        .md-body code {
-            font-family: monospace;
-            background: var(--code-bg);
-            padding: 0.2em 0.4em;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
+    input[type="file"] {
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
 
-        .md-body pre {
-            background: var(--code-bg);
-            padding: 1rem;
-            overflow-x: auto;
-            border-radius: 4px;
-            border: 1px solid var(--border);
-        }
-        .md-body pre code { background: none; padding: 0; color: var(--text); }
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-        .md-body blockquote {
-            border-left: 4px solid var(--dim);
-            margin: 1.5em 0;
-            padding-left: 1rem;
-            color: var(--dim);
-        }
+    .md-body { line-height: 1.6; word-wrap: break-word; }
+    .md-body h1, .md-body h2, .md-body h3 { margin-top: 2em; color: var(--accent); line-height: 1.3; }
+    .md-body h1 { border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .md-body p { margin: 1em 0; }
 
-        .md-body ul, .md-body ol { padding-left: 2rem; }
-        .md-body li { margin: 0.5em 0; }
+    .md-body code {
+      font-family: monospace;
+      background: var(--code-bg);
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
 
-        .md-body a { color: #58a6ff; text-decoration: none; }
-        .md-body a:hover { text-decoration: underline; }
+    .md-body pre {
+      background: var(--code-bg);
+      padding: 1rem;
+      overflow-x: auto;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .md-body pre code { background: none; padding: 0; color: var(--text); }
 
-        /* Sterile Image Links */
-        .sterile-img {
-            display: inline-block;
-            border: 1px dashed var(--dim);
-            padding: 0.25rem 0.5rem;
-            color: var(--dim);
-            font-size: 0.85rem;
-            text-decoration: none;
-            background: rgba(255,255,255,0.05);
-        }
-        .sterile-img:before { content: "🖼️ "; }
-        .sterile-img:hover { border-color: var(--accent); color: var(--accent); }
+    .md-body blockquote {
+      border-left: 4px solid var(--dim);
+      margin: 1.5em 0;
+      padding-left: 1rem;
+      color: var(--dim);
+    }
 
-        .empty-state { text-align: center; color: var(--dim); margin-top: 30vh; }
-    </style>
+    .md-body ul, .md-body ol { padding-left: 2rem; }
+    .md-body li { margin: 0.5em 0; }
+
+    .md-body a { color: #58a6ff; text-decoration: none; }
+    .md-body a:hover { text-decoration: underline; }
+
+    /* Sterile Image Links */
+    .sterile-img {
+      display: inline-block;
+      border: 1px dashed var(--dim);
+      padding: 0.25rem 0.5rem;
+      color: var(--dim);
+      font-size: 0.85rem;
+      text-decoration: none;
+      background: rgba(255,255,255,0.05);
+    }
+    .sterile-img:before { content: "🖼️ "; }
+    .sterile-img:hover { border-color: var(--accent); color: var(--accent); }
+
+    .empty-state { text-align: center; color: var(--dim); margin-top: 30vh; }
+  </style>
 </head>
+
 <body>
-    <header>
-        <h1>Sterile Reader</h1>
-        <div class="file-upload">
-            <button class="btn">Open MD</button>
-            <input type="file" id="fileInput" accept=".md,.markdown,.txt">
-        </div>
-    </header>
+  <header>
+    <h1>Sterile Reader v1.1</h1>
+    <div class="file-upload">
+      <button class="btn">Open MD</button>
+      <input type="file" id="fileInput" accept=".md,.markdown,.txt" />
+    </div>
+  </header>
 
-    <main id="app">
-        <div class="empty-state">
-            <p>No network. No trackers. Just text.</p>
-            <p>Select a file to begin.</p>
-        </div>
-    </main>
+  <main id="app">
+    <div class="empty-state">
+      <p>No network. No trackers. Just text.</p>
+      <p>Select a file to begin.</p>
+    </div>
+  </main>
 
-    <script>
-        // 1. Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log('Sterile SW Active'))
-                .catch(e => console.error('SW Fail', e));
-        }
+  <script>
+    // 1) Service Worker Registration (subpath-safe)
+    if ('serviceWorker' in navigator) {
+      if (window.location.protocol === 'file:') {
+        console.error('Service Workers disabled on file://. Use localhost or HTTPS.');
+      } else {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(() => console.log('Sterile SW Active'))
+          .catch(e => console.error('SW Fail', e));
+      }
+    }
 
-        // 2. File Handling
-        const input = document.getElementById('fileInput');
-        const app = document.getElementById('app');
+    // 2) File Handling
+    const input = document.getElementById('fileInput');
+    const app = document.getElementById('app');
 
-        input.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+    input.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const raw = e.target.result;
-                const safeHtml = parse(raw);
-                app.innerHTML = `<div class="md-body">${safeHtml}</div>`;
-            };
-            reader.readAsText(file);
-        });
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const raw = ev.target.result;
+        const safeHtml = parse(String(raw));
+        app.innerHTML = `<div class="md-body">${safeHtml}</div>`;
+      };
+      reader.readAsText(file);
+    });
 
-        // 3. Sterile Parser
-        // Strictly local. No external calls.
-        function parse(md) {
-            // Escape HTML
-            let out = md.replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;');
+    // 3) Sterile Parser (local only)
+    function parse(md) {
+      let out = md.replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
 
-            // Headers
-            out = out.replace(/^###### (.*$)/gim, '<h6>$1</h6>')
-                     .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
-                     .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-                     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                     .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                     .replace(/^# (.*$)/gim, '<h1>$1</h1>');
+      out = out.replace(/^###### (.*$)/gim, '<h6>$1</h6>')
+               .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
+               .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+               .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+               .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+               .replace(/^# (.*$)/gim, '<h1>$1</h1>');
 
-            // Bold/Italic
-            out = out.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-                     .replace(/__(.*?)__/gim, '<strong>$1</strong>')
-                     .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-                     .replace(/_(.*?)_/gim, '<em>$1</em>');
+      out = out.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+               .replace(/__(.*?)__/gim, '<strong>$1</strong>')
+               .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+               .replace(/_(.*?)_/gim, '<em>$1</em>');
 
-            // Code
-            out = out.replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
-                     .replace(/`([^`]+)`/gim, '<code>$1</code>');
+      out = out.replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
+               .replace(/`([^`]+)`/gim, '<code>$1</code>');
 
-            // Blockquote
-            out = out.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+      out = out.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
 
-            // Lists
-            out = out.replace(/^\s*-\s+(.*$)/gim, '<ul><li>$1</li></ul>')
-                     .replace(/^\s*\*\s+(.*$)/gim, '<ul><li>$1</li></ul>')
-                     .replace(/<\/ul>\s*<ul>/gim, ''); // Merge adjacent lists
+      out = out.replace(/^\s*-\s+(.*$)/gim, '<ul><li>$1</li></ul>')
+               .replace(/^\s*\*\s+(.*$)/gim, '<ul><li>$1</li></ul>')
+               .replace(/<\/ul>\s*<ul>/gim, '');
 
-            // IMAGES (CRITICAL SECURITY)
-            // Convert ![alt](url) -> <a href="url" class="sterile-img">[Image: alt]</a>
-            // Prevents auto-loading remote assets.
-            out = out.replace(/!\[([^\]]*)\]\(([^)]+)\)/gim, 
-                '<a href="$2" target="_blank" rel="noopener noreferrer" class="sterile-img">[Image: $1]</a>');
+      // Images -> link (prevents auto-loading remote assets)
+      out = out.replace(/!\[([^\]]*)\]\(([^)]+)\)/gim,
+        '<a href="$2" target="_blank" rel="noopener noreferrer" class="sterile-img">[Image: $1]</a>');
 
-            // Links
-            out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, 
-                '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/gim,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
-            // Paragraphs & Line Breaks
-            out = out.replace(/\n\n/gim, '</p><p>');
-            out = out.replace(/\n/gim, '<br />');
+      out = out.replace(/\n\n/gim, '</p><p>');
+      out = out.replace(/\n/gim, '<br />');
 
-            // Wrap in initial P if needed
-            if (!out.startsWith('<')) out = '<p>' + out + '</p>';
+      if (!out.startsWith('<')) out = '<p>' + out + '</p>';
 
-            // Cleanup artifacts
-            out = out.replace(/<\/h(\d)><br \/>/gim, '</h$1>')
-                     .replace(/<\/pre><br \/>/gim, '</pre>')
-                     .replace(/<\/blockquote><br \/>/gim, '</blockquote>')
-                     .replace(/<\/ul><br \/>/gim, '</ul>');
+      out = out.replace(/<\/h(\d)><br \/>/gim, '</h$1>')
+               .replace(/<\/pre><br \/>/gim, '</pre>')
+               .replace(/<\/blockquote><br \/>/gim, '</blockquote>')
+               .replace(/<\/ul><br \/>/gim, '</ul>');
 
-            return out;
-        }
-    </script>
+      return out;
+    }
+  </script>
 </body>
 </html>
