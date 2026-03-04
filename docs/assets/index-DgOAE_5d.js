@@ -1,10 +1,4 @@
-const app = document.getElementById('app');
-
-if (!app) {
-  throw new Error('Missing #app element');
-}
-
-app.innerHTML = `
+(function(){const o=document.createElement("link").relList;if(o&&o.supports&&o.supports("modulepreload"))return;for(const e of document.querySelectorAll('link[rel="modulepreload"]'))a(e);new MutationObserver(e=>{for(const r of e)if(r.type==="childList")for(const n of r.addedNodes)n.tagName==="LINK"&&n.rel==="modulepreload"&&a(n)}).observe(document,{childList:!0,subtree:!0});function p(e){const r={};return e.integrity&&(r.integrity=e.integrity),e.referrerPolicy&&(r.referrerPolicy=e.referrerPolicy),e.crossOrigin==="use-credentials"?r.credentials="include":e.crossOrigin==="anonymous"?r.credentials="omit":r.credentials="same-origin",r}function a(e){if(e.ep)return;e.ep=!0;const r=p(e);fetch(e.href,r)}})();const d=document.getElementById("app");if(!d)throw new Error("Missing #app element");d.innerHTML=`
   <main style="font-family: system-ui; padding: 16px; max-width: 900px; margin: 0 auto;">
     <h1 style="margin: 0 0 8px 0;">Sterile MD PWA</h1>
     <p style="margin: 0 0 16px 0; opacity: 0.8;">
@@ -31,32 +25,4 @@ app.innerHTML = `
       </details>
     </section>
   </main>
-`;
-
-const statusEl = document.getElementById('sw-status') as HTMLDivElement | null;
-const btn = document.getElementById('btn-sw') as HTMLButtonElement | null;
-
-function setStatus(text: string) {
-  if (statusEl) statusEl.textContent = text;
-}
-
-async function registerServiceWorker() {
-  if (!('serviceWorker' in navigator)) {
-    setStatus('Service Worker: not supported');
-    return;
-  }
-
-  try {
-    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-    setStatus(`Service Worker: registered, scope = ${reg.scope}`);
-  } catch (e) {
-    setStatus(`Service Worker: register failed: ${String(e)}`);
-  }
-}
-
-btn?.addEventListener('click', async () => {
-  setStatus('Service Worker: checking...');
-  await registerServiceWorker();
-});
-
-registerServiceWorker();
+`;const c=document.getElementById("sw-status"),s=document.getElementById("btn-sw");function i(t){c&&(c.textContent=t)}async function l(){if(!("serviceWorker"in navigator)){i("Service Worker: not supported");return}try{const t=await navigator.serviceWorker.register("./sw.js",{scope:"./"});i(`Service Worker: registered, scope = ${t.scope}`)}catch(t){i(`Service Worker: register failed: ${String(t)}`)}}s==null||s.addEventListener("click",async()=>{i("Service Worker: checking..."),await l()});l();
