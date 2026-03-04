@@ -4,27 +4,35 @@
    - cross-origin: blocked
 */
 
-const CACHE_NAME = "sterile-md-pwa-v2";
+const CACHE_NAME = "sterile-md-pwa-v3";
 
-// Precache list uses stable filenames from vite.config.ts
-const CORE_ASSETS = [
-  "./",
-  "./index.html",
-  "./sw.js",
-  "./assets/index.js",
-  "./assets/index.css",
-];
+async function discoverBuildAssets() {
+  try {
+    const res = await fetch("./index.html", { cache: "no-cache" });
+    if (!res.ok) return [];
+    const html = await res.text();
 
-async function precacheBestEffort(cache) {
-  for (const url of CORE_ASSETS) {
+    const js = html.match(/assets\/index-[^"']+\.js/g) ?? [];
+    const css = html.match(/assets\/index-[^"']+\.css/g) ?? [];
+
+    return [...new Set([...js, ...css])].map((p) => "./" + p);
+  } catch {
+    return [];
+  }
+}
+
+async function precache(cache) {
+  const core = ["./", "./index.html", "./sw.js"];
+  const discovered = await discoverBuildAssets();
+  const targets = [...core, ...discovered];
+
+  for (const url of targets) {
     try {
       const req = new Request(url, { cache: "no-cache" });
       const res = await fetch(req);
-      if (res && res.ok) {
-        await cache.put(req, res.clone());
-      }
-    } catch (e) {
-      // ignore missing assets, keep install resilient
+      if (res && res.ok) await cache.put(req, res.clone());
+    } catch {
+      // ignore
     }
   }
 }
@@ -33,7 +41,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      await precacheBestEffort(cache);
+      await precache(cache);
       await self.skipWaiting();
     })()
   );
@@ -43,11 +51,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(
-        keys
-          .filter((k) => k !== CACHE_NAME)
-          .map((k) => caches.delete(k))
-      );
+      await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
       await self.clients.claim();
     })()
   );
@@ -55,8 +59,6 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-
-  // only handle GET
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
@@ -76,19 +78,14 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       const cache = await caches.open(CACHE_NAME);
 
-      // cache-first
       const cached = await cache.match(req);
       if (cached) return cached;
 
-      // network fallback
       try {
         const res = await fetch(req);
-        if (res && res.ok) {
-          cache.put(req, res.clone());
-        }
+        if (res && res.ok) cache.put(req, res.clone());
         return res;
-      } catch (e) {
-        // offline fallback: try index for navigations
+      } catch {
         if (req.mode === "navigate") {
           const fallback = await cache.match("./index.html");
           if (fallback) return fallback;
