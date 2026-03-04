@@ -1,33 +1,23 @@
-import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+﻿import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
-
-  return {
-    base: './',
-
-    server: {
-      port: 3000,
-      host: '0.0.0.0',
-    },
-
-    plugins: [],
-
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-    },
-
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
+export default defineConfig({
+  plugins: [react()],
+  base: "./",
+  build: {
+    outDir: "docs",
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // стабильные имена без hash
+        entryFileNames: "assets/index.js",
+        chunkFileNames: "assets/chunk-[name].js",
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo?.name ?? "";
+          if (name.endsWith(".css")) return "assets/index.css";
+          return "assets/[name][extname]";
+        },
       },
     },
-
-    build: {
-      outDir: 'docs',
-      emptyOutDir: true,
-    },
-  };
+  },
 });
