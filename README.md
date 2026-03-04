@@ -11,6 +11,9 @@ Commands:
 - commit `docs/`
 - push to `main`
 
+Tip:
+- when copy-pasting commands, do not include the PowerShell prompt like `PS C:\...>`
+
 ## Offline and caching
 Service Worker policy:
 - same-origin GET requests use cache-first strategy with network fallback
