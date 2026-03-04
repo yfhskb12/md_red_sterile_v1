@@ -1,72 +1,80 @@
 // public/sw.js
-// STRICT CACHE-ONLY SERVICE WORKER
-// No network fallback. No telemetry. No runtime caching.
-// Hardened v1.3 (adds real PNG icons + GH Pages subpath safety)
 
-const CACHE_NAME = 'sterile-core-v1.3';
+const CACHE_NAME = 'sterile-md-pwa-v1';
 
-// Normalize base path (important for GitHub Pages: /repo-name/)
-const BASE_PATH = new URL(self.registration.scope).pathname; // e.g. "/md_red_sterile_v1/"
-
-// Cache ONLY app shell + local icons
-const ASSETS = [
-  '',
-  'index.html',
-  'manifest.json',
-  'icon-192.png',
-  'icon-192-maskable.png',
-  'icon-512.png',
-  'icon-512-maskable.png'
-].map((p) => new URL(p, self.registration.scope).toString());
-
-function isCacheableRequest(req) {
-  if (req.method !== 'GET') return false;
-
-  const url = new URL(req.url);
-
-  // Only our origin
-  if (url.origin !== self.location.origin) return false;
-
-  // Only within our scope
-  if (!url.pathname.startsWith(BASE_PATH)) return false;
-
-  return true;
-}
+const CORE_ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.addAll(CORE_ASSETS);
+      self.skipWaiting();
+    })()
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+          .filter((k) => k !== CACHE_NAME)
+          .map((k) => caches.delete(k))
+      );
+      self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  if (!isCacheableRequest(req)) return;
+  if (req.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((res) => {
-      if (res) return res;
+    (async () => {
+      const url = new URL(req.url);
 
-      return new Response('Offline sterile sandbox. Resource not found.', {
-        status: 404,
-        statusText: 'Not Found',
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-      });
-    })
+      // только наш origin
+      if (url.origin !== self.location.origin) {
+        return fetch(req);
+      }
+
+      // навигация
+      if (req.mode === 'navigate') {
+        const cached = await caches.match('./index.html');
+        if (cached) return cached;
+        return fetch(req);
+      }
+
+      // cache first для статики
+      const cached = await caches.match(req, { ignoreSearch: true });
+      if (cached) return cached;
+
+      try {
+        const res = await fetch(req);
+        const cache = await caches.open(CACHE_NAME);
+
+        // кешируем только успешные ответы
+        if (res && res.status === 200) {
+          cache.put(req, res.clone());
+        }
+
+        return res;
+      } catch (e) {
+        // если отвалились, пробуем отдать хоть что то
+        const fallback = await caches.match('./');
+        if (fallback) return fallback;
+        throw e;
+      }
+    })()
   );
 });
