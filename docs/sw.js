@@ -1,83 +1,99 @@
-const CACHE_NAME = 'sterile-md-pwa-v1';
+﻿/* Sterile MD PWA Service Worker
+   Policy:
+   - same-origin GET: cache-first with network fallback
+   - cross-origin: blocked
+*/
 
-const CORE_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './sw.js',
-  './icon-192.png',
-  './icon-512.png'
-];
+const CACHE_NAME = "sterile-md-pwa-v3";
 
-self.addEventListener('install', (event) => {
+async function discoverBuildAssets() {
+  try {
+    const res = await fetch("./index.html", { cache: "no-cache" });
+    if (!res.ok) return [];
+    const html = await res.text();
+
+    const js = html.match(/assets\/index-[^"']+\.js/g) ?? [];
+    const css = html.match(/assets\/index-[^"']+\.css/g) ?? [];
+
+    return [...new Set([...js, ...css])].map((p) => "./" + p);
+  } catch {
+    return [];
+  }
+}
+
+async function precache(cache) {
+  const core = ["./", "./index.html", "./sw.js"];
+  const discovered = await discoverBuildAssets();
+  const targets = [...core, ...discovered];
+
+  for (const url of targets) {
+    try {
+      const req = new Request(url, { cache: "no-cache" });
+      const res = await fetch(req);
+      if (res && res.ok) await cache.put(req, res.clone());
+    } catch {
+      // ignore
+    }
+  }
+}
+
+self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      await cache.addAll(CORE_ASSETS);
-      self.skipWaiting();
+      await precache(cache);
+      await self.skipWaiting();
     })()
   );
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
       await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
-      self.clients.claim();
+      await self.clients.claim();
     })()
   );
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== 'GET') return;
+  if (req.method !== "GET") return;
+
+  const url = new URL(req.url);
+
+  // block cross-origin
+  if (url.origin !== self.location.origin) {
+    event.respondWith(
+      new Response("Blocked", {
+        status: 403,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      })
+    );
+    return;
+  }
 
   event.respondWith(
     (async () => {
-      const url = new URL(req.url);
+      const cache = await caches.open(CACHE_NAME);
 
-      if (url.origin !== self.location.origin) {
-        return fetch(req);
-      }
-
-      // Навигация: offline-first index.html
-      if (req.mode === 'navigate') {
-        const cachedIndex = await caches.match('./index.html');
-        try {
-          return await fetch(req);
-        } catch {
-          if (cachedIndex) return cachedIndex;
-          return new Response('Offline', { status: 200, headers: { 'Content-Type': 'text/plain' } });
-        }
-      }
-
-      // assets cache-first
-      if (url.pathname.includes('/assets/')) {
-        const cached = await caches.match(req, { ignoreSearch: true });
-        if (cached) return cached;
-
-        const res = await fetch(req);
-        if (res && res.status === 200) {
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(req, res.clone());
-        }
-        return res;
-      }
-
-      // прочее cache-first
-      const cached = await caches.match(req, { ignoreSearch: true });
+      const cached = await cache.match(req);
       if (cached) return cached;
 
       try {
         const res = await fetch(req);
-        if (res && res.status === 200) {
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(req, res.clone());
-        }
+        if (res && res.ok) cache.put(req, res.clone());
         return res;
       } catch {
-        return new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+        if (req.mode === "navigate") {
+          const fallback = await cache.match("./index.html");
+          if (fallback) return fallback;
+        }
+        return new Response("Offline", {
+          status: 503,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        });
       }
     })()
   );
